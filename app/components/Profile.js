@@ -17,15 +17,25 @@ var Profile = React.createClass({
 		};
 	},
 
-	//setup ajax requeset, firebase listeners
-	componentDidMount: function() {
-		this.ref = new Firebase('https://blistering-torch-1634.firebaseio.com/');
+	init: function() {
 		var childRef = this.ref.child(this.getParams().username);
 		this.bindAsArray(childRef, 'notes');
 	},
 
+	//setup ajax requeset, firebase listeners
+	componentDidMount: function() {
+		console.log('didmount!');
+		this.ref = new Firebase('https://blistering-torch-1634.firebaseio.com/');
+		this.init();
+	},
+
 	componentWillUnmount: function() {
 		this.unbind('notes');
+	},
+
+	componentWillReceiveProps: function() {
+		this.unbind('notes');
+		this.init();
 	},
 
 	handleAddNote: function(newNote) {

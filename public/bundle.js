@@ -23647,15 +23647,25 @@
 			};
 		},
 
-		//setup ajax requeset, firebase listeners
-		componentDidMount: function componentDidMount() {
-			this.ref = new Firebase('https://blistering-torch-1634.firebaseio.com/');
+		init: function init() {
 			var childRef = this.ref.child(this.getParams().username);
 			this.bindAsArray(childRef, 'notes');
 		},
 
+		//setup ajax requeset, firebase listeners
+		componentDidMount: function componentDidMount() {
+			console.log('didmount!');
+			this.ref = new Firebase('https://blistering-torch-1634.firebaseio.com/');
+			this.init();
+		},
+
 		componentWillUnmount: function componentWillUnmount() {
 			this.unbind('notes');
+		},
+
+		componentWillReceiveProps: function componentWillReceiveProps() {
+			this.unbind('notes');
+			this.init();
 		},
 
 		handleAddNote: function handleAddNote(newNote) {
