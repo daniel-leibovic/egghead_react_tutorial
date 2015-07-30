@@ -5,6 +5,7 @@ var Repos = require('./Github/Repos');
 var Notes = require('./Notes/Notes');
 var ReactFireMixin = require('reactfire');
 var Firebase = require('firebase');
+var helpers = require('../utils/helpers');
 
 var Profile = React.createClass({
 	//Router.State mixin allows query url param (in this case, to get :username)
@@ -20,11 +21,18 @@ var Profile = React.createClass({
 	init: function() {
 		var childRef = this.ref.child(this.getParams().username);
 		this.bindAsArray(childRef, 'notes');
+
+		helpers.getGithubInfo(this.getParams().username)
+			.then(function(dataObj){
+				this.setState({
+					bio: dataObj.bio,
+					repos: dataObj.repos
+				});
+			}.bind(this));
 	},
 
 	//setup ajax requeset, firebase listeners
 	componentDidMount: function() {
-		console.log('didmount!');
 		this.ref = new Firebase('https://blistering-torch-1634.firebaseio.com/');
 		this.init();
 	},
