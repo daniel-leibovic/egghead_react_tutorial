@@ -1,58 +1,71 @@
-var React = require('react');
-var Router = require('react-router');
-var UserProfile = require('./Github/UserProfile');
-var Repos = require('./Github/Repos');
-var Notes = require('./Notes/Notes');
-var ReactFireMixin = require('reactfire');
-var Firebase = require('firebase');
-var helpers = require('../utils/helpers');
+import React from 'react';
+import UserProfile from './Github/UserProfile';
+import Repos from './Github/Repos';
+import Notes from './Notes/Notes';
+import helpers from '../utils/helpers';
+import Rebase from 're-base';
 
-var Profile = React.createClass({
-	//Router.State mixin allows query url param (in this case, to get :username)
-	mixins: [Router.State, ReactFireMixin], 
-	getInitialState: function() {
-		return {
+//tell rebase what your base url of project is
+var base = Rebase.createClass('https://blistering-torch-1634.firebaseio.com/');
+
+class Profile extends React.Component{
+
+	//in ES6, getInitialState is replaced by constructor() which is run in classes when they are instantiated
+	constructor(props){
+		//can't call 'this' in constructor unless you call super(props)
+		super(props);
+		this.state = {
 			notes: [],
-			bio: {name: 'Tyler'},
-			repos: [1,2,3]
-		};
-	},
+			bio: {},
+			repos: []
+		}
+	}
 
-	init: function() {
-		var childRef = this.ref.child(this.getParams().username);
-		this.bindAsArray(childRef, 'notes');
+	init() {
+		//bind property on your component state to an endpoint on firebase
+		this.ref = base.bindToState(this.router.getCurrentParams().username, {
+			context: this,
+			asArray: true,
+			state: 'notes' //:: which state prop do we bind to?
+		});
 
-		helpers.getGithubInfo(this.getParams().username)
-			.then(function(dataObj){
+		helpers.getGithubInfo(this.router.getCurrentParams().username)
+			.then((dataObj) => {
 				this.setState({
 					bio: dataObj.bio,
 					repos: dataObj.repos
 				});
-			}.bind(this));
-	},
+			});
+	}
 
 	//setup ajax requeset, firebase listeners
-	componentDidMount: function() {
-		this.ref = new Firebase('https://blistering-torch-1634.firebaseio.com/');
+	componentDidMount() {
 		this.init();
-	},
+	}
 
-	componentWillUnmount: function() {
-		this.unbind('notes');
-	},
+	componentWillMount() {
+		this.router = this.context.router;
+	}
 
-	componentWillReceiveProps: function() {
-		this.unbind('notes');
+	componentWillUnmount(){
+		base.removeBinding(this.ref);
+	}
+
+	componentWillReceiveProps() {
+		base.removeBinding(this.ref);
 		this.init();
-	},
+	}
 
-	handleAddNote: function(newNote) {
-		this.ref.child(this.getParams().username).set(this.state.notes.concat([newNote]));
-	},
-	
-	render: function() {
-		var username = this.getParams().username;
-		return (
+	handleAddNote(newNote) {
+		//rebase comes with .post() method
+		base.post(this.router.getCurrentParams().username, {
+			data: this.state.notes.concat([newNote])
+		});
+	}
+
+	render(){
+		var username = this.router.getCurrentParams().username;
+		return(
 			<div className="row">
 				<div className="col-md-4">
 					<UserProfile username={username} bio={this.state.bio} />
@@ -64,11 +77,15 @@ var Profile = React.createClass({
 					<Notes 
 						username={username}
 						notes={this.state.notes}
-						addNote={this.handleAddNote} />
+						addNote={this.handleAddNote.bind(this)} />
 				</div>
 			</div>
 		)
 	}
-});
+}
 
-module.exports = Profile;
+Profile.contextTypes = {
+	router: React.PropTypes.func.isRequired
+}
+
+export default Profile;
