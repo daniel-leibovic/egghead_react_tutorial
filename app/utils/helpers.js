@@ -18,7 +18,23 @@ var helpers = {
 					bio: arr[1].data
 				};
 			});
-	}
+	},
+
+  getSpotifyUserInfo: function(accessToken) {
+    return axios.get('https://api.spotify.com/v1/me', {
+      headers: {
+        'Authorization': 'Bearer ' + accessToken
+      }
+    })
+  },
+
+  getRefreshToken: function(refreshToken) {
+    return axios.get('/refresh_token', {
+      data: {
+        'refresh_token': refreshToken
+      }
+    })
+  },
 };
 
 export default helpers;
